@@ -9,9 +9,8 @@
 如爬虫失效，可在仓库中提出issue
 """
 
-
-import requests
 import argparse
+
 from src.crawler import Crawler
 
 parser = argparse.ArgumentParser(
@@ -22,7 +21,8 @@ parser.add_argument('-ls', '--LEETCODE_SESSION', type=str, help="Your LEETCODE_S
 parser.add_argument('-ct', '--CSRF_TOKEN', type=str, help="Your CSRF_TOKEN cookie for login")
 parser.add_argument('-o', '--output', type=str, help="Output path")
 parser.add_argument('-d', '--day', type=int, help="Fetching codes in 'day'")
-parser.add_argument('-O', '--overwrite', action='store_true',  help="Flag to enable overwrite", default=False)
+parser.add_argument('-O', '--overwrite', action='store_true', help="Flag to enable overwrite existing files")
+parser.add_argument('-A', '--all', action='store_true', dest='download_all', help="Download all submissions (default: only Accepted)")
 
 if __name__ == '__main__':
     args = parser.parse_args()

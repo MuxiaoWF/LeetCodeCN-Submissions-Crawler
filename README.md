@@ -1,130 +1,150 @@
 # LeetCodeCN-Submissions-Crawler
-[English introduction](https://github.com/JiayangWu/LeetCodeCN-Submissions-Crawler/blob/master/README-EN.md#leetcodecn-submissions-crawler)
 
-一句话简介：本项目是一个用来爬取力扣中国上**个人提交**的代码的爬虫。
+[English](README-EN.md)
 
-注意：是爬取【个人】也就是【你自己的账号】提交的代码，不是爬取【他人】的代码，更不是爬取【官方代码】！！！
+爬取力扣中国 [leetcode.cn](https://leetcode.cn) 上**你自己账号**的个人提交代码。
 
-# 灵感
-**辛辛苦苦三个月，勤勤恳恳四百题，leetcode一片绿，github万里白。**
+> ⚠️ 是爬取【你自己的账号】提交的代码，不是爬取他人的代码，更不是爬取官方代码。
 
-手动上传是不可能手动上传的，这辈子也懒得手动上传。
+## 功能特性
 
-找了一圈只能找到LeetCode的提交爬虫，没有力扣中国的，所以只能自己造轮子了。
+- **Cookie 登录**：通过 `LEETCODE_SESSION` + `CSRF_TOKEN` 认证，无需账号密码
+- **多 AC 自动保存**：同一题多次 Accepted 全部保留，文件名含提交时间戳（如 `0001-TwoSum-20260806_190117.py`）
+- **按状态过滤**：默认只下载 Accepted，可通过 `-A` 下载全部状态（Wrong Answer、TLE 等）
+- **智能限流处理**：GraphQL 限流自动检测 + 指数退避重试，不会因限流丢失数据
+- **代理容错**：代理断开自动重建 session，无缝恢复
+- **跨运行安全**：时间戳命名保证重复运行不会产生重复文件
 
-学了两天爬虫鼓捣了这么个东西出来，我用的蛮顺手的，希望你们也能用的顺手。
+## 快速开始
 
-我的生成文件夹可以参考：https://github.com/JiayangWu/LeetCode-Python
+```bash
+# 1. 克隆项目
+git clone https://github.com/JiayangWu/LeetCodeCN-Submissions-Crawler.git
+cd LeetCodeCN-Submissions-Crawler
 
-我的题解博客可以参考：https://blog.csdn.net/qq_32424059
+# 2. 安装依赖
+pip install -r requirements.txt
 
-# 使用方法
-1. `clone`或者`download`到本地
-2. 安装依赖库 `pip install -r requirements.txt`
-3. 配置`configuration/config.json`文件，用户名，密码，本地存储地址，时间控制（天），是否覆盖已有的题解
-4. 在命令行下运行`python3 main.py`或者使用IDE编译运行
-5. 如果想传入命令行指令，请查看main.py中的相关实现
-6. CML example: python main.py -id <your_id> -pw <your_pw> -o <output_path> -O(输入这个参数以覆写输出)
-7. 如果你配置了`configuration/config.json`那么所有的参数都是可选的，重复配置的参数将以命令行为准（除了OverWrite）
+# 3. 配置 cookies
+cp configuration/config-example.json configuration/config.json
+# 编辑 config.json，填入你的 LEETCODE_SESSION 和 CSRF_TOKEN
 
-# 项目演示
-![image](https://github.com/JiayangWu/LeetCodeCN-Submissions-Crawler/blob/master/doc/demo.gif)
-这个GIF是由LICEcap V1.28生成的，[下载地址](https://www.cockos.com/licecap/)
+# 4. 运行
+python main.py
+```
 
-# 一些说明
-1. 目前支持的语言有：`{"cpp": ".cpp", "python3": ".py", "python": ".py", "mysql": ".sql", "golang": ".go", "java": ".java",
-                   "c": ".c", "javascript": ".js", "TypeScript": ".ts", "php": ".php", "csharp": ".cs", "ruby": ".rb", "swift": ".swift",
-                   "scala": ".scl", "kotlin": ".kt", "rust": ".rs"}`
-2. 致谢@fyears， 本脚本的`login`函数来自https://gist.github.com/fyears/487fc702ba814f0da367a17a2379e8ba
-3. `config.json`里的`day`代表爬多少天之内的`submission`，比如我每天爬今天提交的题解，就是设置为`0.8`就好了，如果第一次使用需要爬所有的题解，就设一个大一点的数比如`1000`之类的。
-4. `config.json`里的`overwrite`代表是否覆盖之前的题解。如果是`True`就代表如果你隔一段时间`AC`了一道题两次，第二次的题解会覆盖第一次的题解。但是你第一次的题解依然可以在`commit`里找到记录。（现在更改为在命令行中输入`-O`开启）
-5. 爬虫教程可以看https://blog.csdn.net/c406495762/column/info/15321
+## 配置说明
 
-# 版本介绍
-当前版本V3.3，于2023/07/09上传
-1. 重构crawler代码
-2. 从GraphQL中获取problem frontend id，不再依赖于Mapping
-3. 更合理的temporary problem提交的处理机制
-4. 减少不必要的命令行参数
+### config.json
 
-历史版本V3.2，于2023/07/09上传
-1. 将GraphQL code提取到单独的文件夹增加可读性
-2. 改进GraphQL code, 更快，少流量
-3. 等待更新Problem sets时，输出字符以鉴别是否卡死
+| 字段 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `LEETCODE_SESSION` | string | 是 | — | 浏览器 Cookie 中的 LEETCODE_SESSION |
+| `CSRF_TOKEN` | string | 是 | — | 浏览器 Cookie 中的 csrftoken |
+| `output_dir` | string | 否 | `./leetCode` | 代码输出目录 |
+| `day` | number | 否 | `1000` | 爬取最近多少天的提交 |
+| `overwrite` | bool | 否 | `false` | 是否覆盖已存在的文件 |
+| `only_accepted` | bool | 否 | `true` | 是否只下载 Accepted（`false` = 全部状态） |
 
-历史版本V3.1，于2023/07/08上传
-1. 添加命令行支持
+### 如何获取 Cookie
 
-历史版本V3.0，于2023/07/07上传
-1. 重构代码
-2. 如果输出目录不存在，即使有中间文件夹，也会创建完整路径
-3. 未安装git时，跳过git相关操作
+1. 浏览器打开 [leetcode.cn](https://leetcode.cn) 并登录
+2. 按 F12 打开开发者工具 → Application → Cookies → leetcode.cn
+3. 复制 `LEETCODE_SESSION` 和 `csrftoken` 的值
 
+### 命令行参数
 
-历史版本V2.4，于2023/07/07上传
-1. 输出Log level和时间戳
-2. 修复在Windows上在获取problem set时，不能正确decode的问题
+```
+python main.py [options]
 
+选项:
+  -ls, --LEETCODE_SESSION     Cookie 中的 LEETCODE_SESSION
+  -ct, --CSRF_TOKEN           Cookie 中的 csrftoken
+  -o, --output                输出目录
+  -d, --day                   爬取天数
+  -O, --overwrite             覆盖已存在的文件
+  -A, --all                   下载所有状态（默认只下载 Accepted）
+```
 
-历史版本V2.3，于2023/06/11上传
-1. 实现了当一道题的题号从暂时题号变更为永久题号时，自动覆盖已经写到本地的记录的功能。之前可能会同时存在暂时题号和永久题号的两条记录。
+命令行参数优先级高于 config.json。示例：
 
-历史版本V2.2，于2023/05/22上传
-1. 实现了自动更新题号，以后可以直接从官网下载题号和题目标题，并存储在`mapping.json`里
-2. 代码重构
-3. 感谢[frallisland](https://github.com/frallisland)
+```bash
+# 只下载最近 30 天的 Accepted，覆盖已有
+python main.py -d 30 -O
 
-历史版本V2.1，于2023/05/13上传
-1. 更新`ProblemList`至题号2688，新的题号需要在`ProblemList`里手动添加
+# 下载所有状态的提交
+python main.py -A
 
-历史版本V2.0，于2023/05/05上传
-1. 更新`ProblemList`至题号2668，新的题号需要在`ProblemList`里手动添加
-2. 更新登录网址
-3. 优化获取`ProblemList`的方法。现在只需要在显示有全部题目的网页上通过网页审查元素复制`html`代码并存储到同一文件夹下的[LeetCode.html](https://github.com/JiayangWu/LeetCode-Crawler-Sample-HTML)，然后运行`Python ProblemListGenerator.py`即可获取最近的所有题目和题号的对应。
-4. 感谢[frallisland](https://github.com/frallisland)
+# 指定输出目录
+python main.py -o ./my-leetcode-solutions
+```
 
-历史版本V1.9，于2021/04/30上传
-1. 更新`ProblemList`至题号1841，新的题号需要在`ProblemList`里手动添加
+## 输出目录结构
 
-历史版本V1.8，于2021/02/10上传
-1. 更新`ProblemList`至题号1755，新的题号需要在`ProblemList`里手动添加
+```
+leetCode/
+├── 0001.Two-Sum/
+│   ├── Accepted/
+│   │   ├── 0001-Two-Sum-20260806_190117.py   ← 最新 AC
+│   │   ├── 0001-Two-Sum-20260805_120000.py   ← 上一次 AC
+│   │   └── 0001-Two-Sum-20260804_080000.py   ← 再上一次 AC
+│   ├── Wrong_Answer/
+│   │   └── 0001-Two-Sum-20260803_150000.py
+│   └── problem.md                            ← 题目描述
+├── 0015.3Sum/
+│   └── ...
+```
 
-历史版本V1.7，于2020/08/27上传
-1. 修复未知原因造成的无法爬取代码的bug
-2. 更新`ProblemList`至题号1563，新的题号需要在`ProblemList`里手动添加
+- 每道题一个文件夹
+- 每种状态（Accepted / Wrong_Answer / ...）一个子文件夹
+- 文件名包含提交时间戳，同一题多次提交自动保留
+- `problem.md` 包含题目描述、难度、标签
 
-历史版本V1.6，于2020/07/27上传
-1. 修复因LC-CN数据存储方式变更，导致的无法爬取代码的bug
-2. 更新`ProblemList`至题号1531，新的题号需要在`ProblemList`里手动添加
+## 支持的语言
 
-历史版本V1.5，于2020/06/14上传
-1. 优化`main.py`，感谢[@zxMrlc](https://github.com/zxmrlc)
-2. 更新`ProblemList`至题号1473，新的题号需要在`ProblemList`里手动添加
+`C++`, `Python`, `Python3`, `Java`, `JavaScript`, `TypeScript`, `Go`, `C`, `C#`, `Ruby`, `Swift`, `Scala`, `Kotlin`, `Rust`, `PHP`, `MySQL`
 
-历史版本V1.4，于2020/03/01上传
-1. 更新`ProblemList`至题号1368，新的题号需要在`ProblemList`里手动添加
-2. 新增对面试题的爬虫支持
+## 常见问题
 
-历史版本V1.3，于2019/12/09上传
-1. 修改爬虫逻辑并优化路径设置，感谢[@VirgilChen97](https://github.com/VirgilChen97)
-3. 修复`git push`时双引号不匹配的报错
-4. 修复`write`函数只能接受一个参数的报错
+**Q: 运行后提示 "超出访问限制"？**
 
-历史版本V1.2，于2019/11/13上传
-1. 由于力扣网站登录方式变动，需要解决登录无限失败的问题，小改了`login`函数
-2. 更新`ProblemList`至题号1255，新的题号需要在`ProblemList`里手动添加
-3. 修复`ProbelmListGenerator.py`读取txt文件时，文件编码gbk报错的bug
+A: 程序会自动检测限流并使用指数退避等待（15s → 30s → 60s → 120s → 240s），等待结束后自动重试，无需手动干预。如果频繁触发，建议增大 `day` 参数的时间跨度或使用 `-O` 减少重复下载。
 
-历史版本V1.1，于2019/8/8上传
-1. 由于力扣网站登录方式变动，需要解决登录无限失败的问题，小改了`login`函数
-2. 更新`ProblemList`至题号1147， 新的题号需要在`ProblemList`里手动添加
-3. 新增一个`ProblemListGenerator`函数，用于生成新的`ProblemList`
+**Q: 如何重新下载已保存的提交？**
 
-历史版本V1.0，于2019/5/24上传
-1. 目前支持爬取力扣中国（leetcode-cn.com)上的个人提交的代码
-2. 支持时间控制，即可以自由选择爬取**前多少天之内**的代码，比如30天内，2天内
-3. 一键上传Github，注意本功能需要**手动init**
-4. 在`config.json`里调整参数
-5. **注意保护个人用户名及密码**
-6. 目前支持到题号1044，新的题号需要在ProblemList里手动添加
+A: 使用 `-O` 参数覆盖已有文件，或手动删除对应文件后重新运行。
 
+**Q: 为什么只下载了 Accepted？**
+
+A: 默认 `only_accepted: true`。使用 `-A` 参数或在 config.json 中设置 `"only_accepted": false` 即可下载所有状态。
+
+## 致谢
+
+- 原项目作者 [@JiayangWu](https://github.com/JiayangWu)
+- [@Bobchenyx](https://github.com/Bobchenyx)
+- 登录函数参考 [@fyears](https://gist.github.com/fyears/487fc702ba814f0da367a17a2379e8ba)
+
+## 版本历史
+
+**V4.0** (2026/08/11)
+- Cookie 认证替代账号密码登录
+- 提交时间戳命名，支持同一题多 AC 自动保存
+- GraphQL 限流自动检测 + 指数退避重试
+- 代理断连自动恢复
+- 新增 `only_accepted` 过滤选项
+- 命令行 `-A`/`-O` 参数
+
+**V3.3** (2023/07/09)
+- 重构 crawler 代码
+- 从 GraphQL 获取 problem frontend id
+
+**V3.2** (2023/07/09)
+- GraphQL query 提取到独立文件
+
+**V3.1** (2023/07/08)
+- 添加命令行支持
+
+**V3.0** (2023/07/07)
+- 代码重构，自动创建完整目录路径
+
+**V2.x 及更早** — 参见 git 历史

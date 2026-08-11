@@ -1,6 +1,8 @@
 .vscode/
+.idea/
 __pycache__/
 output
 /configuration/config.json
 .DS_Store
 tmp/
+leetCode/

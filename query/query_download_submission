@@ -1,9 +1,18 @@
 query mySubmissionDetail($id: ID!) {
     submissionDetail(submissionId: $id) {
         code
+        statusDisplay
+        runtime
+        memory
         question {
             questionFrontendId
             translatedTitle
+            translatedContent
+            difficulty
+            topicTags {
+                name
+                translatedName
+            }
         }
     }
 }

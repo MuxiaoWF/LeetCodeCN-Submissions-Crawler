@@ -1,5 +1,8 @@
 {
-  "output_dir": "<local_git_repo>",
-  "cookie": "<leetcode_cookie>",
-  "day": 1000
+  "LEETCODE_SESSION": "<your_leetcode_session_cookie>",
+  "CSRF_TOKEN": "<your_csrf_token>",
+  "output_dir": "./leetCode",
+  "day": 1000,
+  "overwrite": false,
+  "only_accepted": true
 }
